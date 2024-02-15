@@ -2,9 +2,12 @@
 Creating infrastructure in AWS using Terraform (VPC with public and private subnet in production)
 # AWS Infrastructure with Terraform
 
-This Terraform configuration creates an AWS infrastructure with the following components:
+
+
+![vpc-example-private-subnets](https://github.com/KANDUKURIsaikrishna/aws-infrastructure-terraform-project-2/assets/50510272/e7a70360-e4d4-449c-8598-c54258a5b179)
 
 ## Overview
+This Terraform configuration creates an AWS infrastructure with the following components:
 
 The infrastructure includes a Virtual Private Cloud (VPC) with public and private subnets spread across two Availability Zones. Instances run in the private subnets, managed by an Auto Scaling Group and accessed through a load balancer deployed in the public subnets. NAT Gateways provide internet access for instances in private subnets, and a Gateway VPC Endpoint enables access to Amazon S3 without internet access.
 
