@@ -99,31 +99,96 @@ resource "aws_security_group" "lb_sg" {
 
 # Create Auto Scaling Group
 resource "aws_autoscaling_group" "asg" {
-  availability_zones     = ["eu-north-1a", "eu-north-1b"]
-  launch_configuration   = aws_launch_configuration.example_lc.name
-  min_size               = 1
+  launch_configuration   = aws_launch_configuration.ec2_lc.name
+  min_size               = 2
   max_size               = 3
   desired_capacity       = 2
+  health_check_type     = "EC2"
+  termination_policies  = ["OldestInstance"]
   vpc_zone_identifier    = [aws_subnet.private_subnet_1a.id, aws_subnet.private_subnet_1b.id]
+  launch_template {
+    id      = aws_launch_configuration.ec2_lc.id
+    version = "1"
+  }
 
   # Add other auto scaling configurations
 }
 
+
+
+
+
+
 # Create Launch Configuration
-resource "aws_instance" "webserver1" {
-  ami = "ami-0014ce3e52359afbd"  # Specify an appropriate AMI ID
-  instance_type = "t3.micro"
-  vpc_security_group_ids = [aws_security_group.webSg.id]
-  subnet_id              = aws_subnet.sub1.id
-  user_data              = base64encode(file("userdata.sh"))
+resource "aws_launch_configuration" "ec2_lc" {
+  image_id          = var.ami_id
+  instance_type     = "t2.micro"  # Example instance type, change as needed
+  security_groups   = [aws_security_group.instance_sg.id]
+
+  # Add other launch configuration settings
 }
 
-resource "aws_instance" "webserver2" {
-  ami = "ami-0014ce3e52359afbd"  # Specify an appropriate AMI ID
-  instance_type = "t3.micro"
-  vpc_security_group_ids = [aws_security_group.webSg.id]
-  subnet_id              = aws_subnet.sub2.id
-  user_data              = base64encode(file("userdata1.sh"))
+# Create Security Group for Instances
+
+
+  # Add rules for instance traffic
+
+  # Create Security Group for Instances
+resource "aws_security_group" "instance_sg" {
+  vpc_id = aws_vpc.myvpc.id
+
+  # Allow traffic from ALB
+  ingress {
+    description        = "Allow traffic from ALB"
+    from_port          = 80
+    to_port            = 80
+    protocol           = "tcp"
+    security_groups    = [aws_security_group.lb_sg.id]
+  }
+
+  # Allow SSH access for management
+  ingress {
+    description = "SSH from my IP"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Replace "YOUR_IP" with your actual IP address
+  }
+
+  # Allow outgoing traffic to anywhere
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
+
+# Create Gateway VPC Endpoint for Amazon S3
+resource "aws_vpc_endpoint" "s3_endpoint" {
+  vpc_id            = aws_vpc.myvpc.id
+  service_name      = "com.amazonaws.eu-north-1.s3"
+  route_table_ids   = [aws_route_table.private_route_table_1a.id, aws_route_table.private_route_table_1b.id]
+}
+
+# Create Route Tables for private subnets
+resource "aws_route_table" "private_route_table_1a" {
+  vpc_id = aws_vpc.myvpc.id
+}
+
+resource "aws_route_table" "private_route_table_1b" {
+  vpc_id = aws_vpc.myvpc.id
+}
+
+# Associate private subnets with route tables
+resource "aws_route_table_association" "private_subnet_association_1a" {
+  subnet_id      = aws_subnet.private_subnet_1a.id
+  route_table_id = aws_route_table.private_route_table_1a.id
+}
+
+resource "aws_route_table_association" "private_subnet_association_1b" {
+  subnet_id      = aws_subnet.private_subnet_1b.id
+  route_table_id = aws_route_table.private_route_table_1b.id
+}
 
