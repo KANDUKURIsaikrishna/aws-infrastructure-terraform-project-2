@@ -111,7 +111,7 @@ resource "aws_autoscaling_group" "asg" {
     version = "1"
   }
 
-  # Add other auto scaling configurations
+  # You Can Add other auto scaling configurations
 }
 
 
@@ -125,13 +125,9 @@ resource "aws_launch_configuration" "ec2_lc" {
   instance_type     = "t2.micro"  # Example instance type, change as needed
   security_groups   = [aws_security_group.instance_sg.id]
 
-  # Add other launch configuration settings
+  # You can Add other launch configuration settings
 }
 
-# Create Security Group for Instances
-
-
-  # Add rules for instance traffic
 
   # Create Security Group for Instances
 resource "aws_security_group" "instance_sg" {
